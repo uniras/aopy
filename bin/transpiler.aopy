@@ -1,0 +1,219 @@
+import aopy
+
+#get configuration values
+aopy.aopyReadConfig()
+indentLength = aopy.aopyGetConfig('indentLength')
+removeCommentFlag = aopy.aopyGetConfig('removeComment')
+
+#global(multi line) counter and flags
+indent = 0
+longDoubleQuoteFlag = False
+longSingleQuoteFlag = False
+dictCounter = 0
+blockOpenFlag = False
+
+#aopy translator(Strict mode)
+def transpile(line) {
+  #remove newline character
+  line = line.replace('\n', '')
+
+  #flag and counter
+  global removeCommentFlag
+  global longDoubleQuoteFlag
+  global longSingleQuoteFlag
+  global dictCounter
+  global indent
+  global blockOpenFlag
+  dictOpenFlag = False
+  dictCloseFlag = False
+  singleQuoteFlag = False
+  doubleQuoteFlag = False
+  tripleQuoteOpenFlag = False
+  tripleQuoteCloseFlag = False
+  escapeFlag = False
+  commentFlag = False
+  braceFlag = False
+  singleQuoteCount = 0
+  doubleQuoteCount = 0
+
+  #indent string
+  indentStr = ' ' * indentLength * indent
+
+  #output code string
+  codeStr = ''
+
+  #iterate through each character
+  for i in range(len(line)) {
+    #write character
+    addChar = line[i]
+
+    if (commentFlag == True) {
+      #skip comment
+      if (removeCommentFlag == True) {
+        addChar = ''
+      }
+    } else {
+      #quote and escape check
+      if (line[i] == "'") {
+        if (longDoubleQuoteFlag == False or escapeFlag == False) {
+          if (singleQuoteCount == 2) {
+            #triple single quote
+            tripleQuoteCloseFlag = longSingleQuoteFlag
+            longSingleQuoteFlag = not longSingleQuoteFlag
+            tripleQuoteOpenFlag = longSingleQuoteFlag
+            singleQuoteCount = 0
+          } elif (doubleQuoteFlag == False) {
+            #count single quote
+            singleQuoteCount += 1
+          }
+        }
+      } elif (line[i] == '"') {
+        if (longSingleQuoteFlag == False or escapeFlag == False) {
+          if (doubleQuoteCount == 2) {
+            #triple double quote
+            tripleQuoteCloseFlag = longDoubleQuoteFlag
+            longDoubleQuoteFlag = not longDoubleQuoteFlag
+            tripleQuoteOpenFlag = longDoubleQuoteFlag
+            doubleQuoteCount = 0
+          } elif (singleQuoteFlag == False) {
+            #count double quote
+            doubleQuoteCount += 1
+          }
+        }
+      } elif (line[i] == '\\') {
+        escapeFlag = not escapeFlag
+        singleQuoteCount = 0
+        doubleQuoteCount = 0
+      } else {
+        #non quote or escape character
+        if (longSingleQuoteFlag == False and longDoubleQuoteFlag == False) {
+          if (singleQuoteCount == 1 and doubleQuoteFlag == False) {
+            #single quote
+            singleQuoteFlag = not singleQuoteFlag
+          } elif (doubleQuoteCount == 1 and singleQuoteFlag == False) {
+            #double quote
+            doubleQuoteFlag = not doubleQuoteFlag
+          }
+
+          if (singleQuoteFlag == False and doubleQuoteFlag == False) {
+            #outside of quote
+            if (line[i] == '__BEGINBRACE__') {
+              #begin brace
+              if (dictOpenFlag == True) {
+                #double begin brace = dict mode begin
+                addChar = ''
+                dictOpenFlag = False
+                blockOpenFlag = False
+              } elif (dictCounter == 0 and i == len(line) - 1) {
+                #single begin brace in the end of line = block mode begin
+                addChar = ':'
+                blockOpenFlag = True
+                indent += 1
+              } elif (dictCounter == 0 and i > 0 and line[i-1] == ':') {
+                #colon to single begin brace = block mode begin
+                addChar = ''
+                blockOpenFlag = True
+                indent += 1
+              } else {
+                #single begin brace = dict mode begin
+                dictOpenFlag = True
+                blockOpenFlag = False
+                dictCounter += 1
+                indent += 1
+              }
+              braceFlag = True
+              dictCloseFlag = False
+            } elif (line[i] == '__ENDBRACE__') {
+              #end brace
+              if (dictCloseFlag == True) {
+                #double end brace = dict mode end
+                addChar = ''
+                dictCloseFlag = False
+                braceFlag = True
+              } elif (dictCounter > 0) {
+                #dict mode end brace
+                dictCloseFlag = True
+                dictCounter -= 1
+                indent -= 1
+              } elif (blockOpenFlag == True) {
+                #empty block. insert pass statement
+                indentStr += ' ' * indentLength
+                addChar = 'pass'
+                indent -= 1
+              } else {
+                #block mode end brace
+                addChar = ''
+                indent -= 1
+              }
+              if(braceFlag == True) {
+                #double end brace or if there is an end brace after a begin brace on the same line, do not reduce indentation.
+                braceFlag = False
+              } else {
+                #reduce indentation.
+                indentStr = indentStr[indentLength:]
+              }
+              dictOpenFlag = False
+              blockOpenFlag = False
+            } elif (line[i] == '__SHARP__') {
+              #start comment.
+              dictOpenFlag = False
+              dictCloseFlag = False
+              commentFlag = True
+              if (removeCommentFlag == True) {
+                addChar = ''
+              }
+            } elif (line[i] == ' ' or line[i] == '\t') {
+              #whitespace. reset flags.
+              dictOpenFlag = False
+              dictCloseFlag = False
+            } else {
+              #other character. reset flags.
+              blockOpenFlag = False
+              dictOpenFlag = False
+              dictCloseFlag = False
+            }
+          }
+        }
+        #reset escape flag and quote count
+        escapeFlag = False
+        singleQuoteCount = 0
+        doubleQuoteCount = 0
+      }
+    }
+    if (commentFlag == False) {
+      #output character
+      codeStr += addChar
+    }
+  }
+
+  if (tripleQuoteOpenFlag == False and (longSingleQuoteFlag == True or longDoubleQuoteFlag == True)) {
+    #in multi line quote(triple quote)
+    result = line
+  } elif (tripleQuoteOpenFlag == True) {
+    #start of multi line quote(triple quote)
+    result = indentStr + codeStr.lstrip()
+  } elif (tripleQuoteCloseFlag == True) {
+    #end of multi line quote(triple quote)
+    result = codeStr.rstrip()
+  } else {
+    #source code
+    #remove leading and trailing whitespace
+    codeStr = codeStr.strip()
+
+    if (codeStr == '') {
+      #whitespace only line to empty string = empty line
+      result = ''
+    } else {
+      #set indent
+      result = indentStr + codeStr
+    }
+  }
+
+  #symbol translate and return line string
+  return aopy.convertSymbol(result)
+}
+
+#main function(normal mode)
+if __name__ == '__main__' {
+    aopy.aopyStart(transpile)
+}

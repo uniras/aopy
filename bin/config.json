@@ -1,0 +1,30 @@
+{
+  "indentLength": {
+    "#####": "Indent length",
+    "value": 4
+  },
+  "cacheFile": {
+    "#####": "Cache file name. If empty, execution is handled by the 'exec' function.",
+    "value": ".aopycache.py"
+  },
+  "removeComment": {
+    "#####": "Comment removal mode. Set to 'true' to enable comment removal, 'false' to retain comments.",
+    "value": true
+  },
+  "removeBlankLine": {
+    "#####": "Blank line removal mode. Set to 'true' to remove blank lines, 'false' to keep them.",
+    "value": true
+  },
+  "useInterpreter": {
+    "#####": "Interpreter mode. Set to 'true' to enable interpreter mode, 'false' to transpile only.",
+    "value": true
+  },
+  "pythonCommand": {
+    "#####": "Python command (If left blank, it will be 'python' on Windows and 'python3' on other platforms)",
+    "value": ""
+  },
+  "transpilerFile": {
+    "#####": "File name of the aopy transpiler.",
+    "value": "transpiler.aopy"
+  }
+}

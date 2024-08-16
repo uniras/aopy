@@ -1,0 +1,5 @@
+.*.py
+/backup
+/_backup
+__pycache__
+transpiler.py
