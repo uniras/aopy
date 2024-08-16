@@ -13,7 +13,7 @@ aopy.pyには2つの動作モードがあります。
 .aopy ファイルをトランスレートし、その結果得られた Python コードをそのまま Python インタプリタで実行します。
 
 ``` bash
-python aopy.py test.aopy
+python ./bin/aopy.py test.aopy
 ```
 
 `config.json`の`cacheFile`で指定されたファイルに Python コードを出力し、即座に実行します。コマンドライン引数は sys.argv から .aopy ファイルの指定部分を除外した状態で渡されます。ファイルを指定しなかった場合は標準入力からaopyコードを受け取ります。
@@ -25,7 +25,7 @@ python aopy.py test.aopy
 `-o` オプションを使用して出力ファイル名を指定することにより、トランスパイルされたコードを指定されたファイルに出力します。
 
 ``` bash
-python aopy.py test.aopy -o test.py
+python ./bin/aopy.py test.aopy -o test.py
 ```
 
 このコマンドを実行すると、`test.aopy` をトランスパイルして、その結果を `test.py` に出力します。

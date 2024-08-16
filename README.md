@@ -12,8 +12,8 @@ aopy.py has two modes of operation.
 
 Translates .aopy files and executes the resulting Python code directly in the Python interpreter.
 
-```` bash
-python aopy.py test.aopy
+``` bash
+python ./bin/aopy.py test.aopy
 ```
 
 Outputs the Python code to the file specified by ``cacheFile`` in ``config.json`` and executes it immediately. Command line arguments are passed from sys.argv with the specified portion of the .aopy file excluded. If no file is specified, the aopy code is received from standard input.
@@ -25,7 +25,7 @@ If `cacheFile` is empty, the translated code is executed by the exec function. I
 Outputs the transpiled code to the specified file by using the `-o` option and specifying the name of the output file.
 
 ``` bash
-python aopy.py test.aopy -o test.py
+python ./bin/aopy.py test.aopy -o test.py
 ```
 
 This command will transpile `test.aopy` and output the result to `test.py`.
@@ -68,15 +68,15 @@ def test() {
     print(“test3”)
   }
   if (False) :{ print(“oneline”) }
-  print(“indent?”)
+  print(“indent”)
 }
 
 test()
-````
+```
 
 After conversion
 
-````python
+```python
 def test() :: print("Hello, World!
     print(“Hello, World!”)
     if (False) : print(“nest”)
@@ -97,9 +97,9 @@ def test() :: print("Hello, World!
     if (True) :
         print(“test3”)
     if (False) : print(“oneline”)
-    print(“indent?”)
+    print(“indent”)
 test()
-````
+```
 
 ## Language specification
 
